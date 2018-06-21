@@ -1,164 +1,81 @@
-// this is javascrip file.
+// Javascript code in here
 
-// Define UI Vars
-const form = document.querySelector('#task-form');
-const taskList = document.querySelector('.collection');
-const clearBtn = document.querySelector('.clear-tasks');
-const filter = document.querySelector('#filter');
-const taskInput = document.querySelector('#task');
+document.getElementById('loan-form').addEventListener('submit', function(e){
+    // Hide results
+    document.getElementById('results').style.display = 'none';
 
-// Load all event listners
-loadEventListners();
+    // Show loader
+    document.getElementById('loading').style.display = 'block';
 
-// Load all event listners
-function loadEventListners() {
-    // DOM Load event
-    document.addEventListener('DOMContentLoaded', getTasks);
-    // Add task event
-    form.addEventListener('submit', addTask);
-    // Remove task event
-    taskList.addEventListener('click', removeTask);
-    // Clear task event
-    clearBtn.addEventListener('click', clearTasks);
-    // Filter task event
-    filter.addEventListener('keyup', filterTasks);
-}
-
-// Get Tasks from Local Storage
-function getTasks() {
-    let tasks;
-    if(localStorage.getItem('tasks') === null){
-        tasks = [];
-    } else {
-        tasks = JSON.parse(localStorage.getItem('tasks'));
-    }
-
-    tasks.forEach(function(task){
-        // Create li element
-        const li = document.createElement('li');
-        // Add class
-        li.className = 'collection-item';
-        // Create text node and append to li
-        li.appendChild(document.createTextNode(task));
-        // Create new link element
-        const link = document.createElement('a');
-        // Add class
-        link.className = 'delete-item secondary-content';
-        // Add icon html
-        link.innerHTML = '<i class="fa fa-remove"></i>';
-        // Append the link to li
-        li.appendChild(link);
-
-        // Append li to ul
-        taskList.appendChild(li);
-    });
-}
-
-// Add Task
-function addTask(e) {
-    if(taskInput.value === '') {
-        alert('Add a task')
-    } else {
-        // Create li element
-        const li = document.createElement('li');
-        // Add class
-        li.className = 'collection-item';
-        // Create text node and append to li
-        li.appendChild(document.createTextNode(taskInput.value));
-        // Create new link element
-        const link = document.createElement('a');
-        // Add class
-        link.className = 'delete-item secondary-content';
-        // Add icon html
-        link.innerHTML = '<i class="fa fa-remove"></i>';
-        // Append the link to li
-        li.appendChild(link);
-
-        // Append li to ul
-        taskList.appendChild(li);
-
-        // Store in Local Storage
-        storeTaskInLocalStorage(taskInput.value);
-
-        // Clear input
-        taskInput.value = '';
-    }
+    setTimeout(calculateResults, 2000)
 
     e.preventDefault();
-}
+});
 
-// Store Task
-function storeTaskInLocalStorage(task) {
-    let tasks;
-    if(localStorage.getItem('tasks') === null){
-        tasks = [];
+// Calculate Results
+function calculateResults(){
+    
+    // UI Vars
+    const amount = document.getElementById('amount');
+    const interest = document.getElementById('interest');
+    const years = document.getElementById('years');
+    const monthlyPayment = document.getElementById('monthly-payment');
+    const totalPayment = document.getElementById('total-payment');
+    const totalInterest = document.getElementById('total-interest');
+
+    const principal = parseFloat(amount.value);
+    const CalculatedInterest = parseFloat(interest.value) / 100 /12;
+    const CalculatedPayments = parseFloat(years.value) * 12;
+
+    // Compute monthly payment
+    const x = Math.pow(1 + CalculatedInterest, CalculatedPayments);
+    const monthly = (principal*x*CalculatedInterest)/(x-1);
+
+    if(isFinite(monthly)) {
+        monthlyPayment.value = monthly.toFixed(2);
+        totalPayment.value = (monthly * CalculatedPayments).toFixed(2);
+        totalInterest.value = ((monthly * CalculatedPayments)-principal).toFixed(2);
+
+        // Show Results
+        document.getElementById('results').style.display = 'block';
+
+        // Hide loader
+        document.getElementById('loading').style.display = 'none';
     } else {
-        tasks = JSON.parse(localStorage.getItem('tasks'));
+        showError('Please check your numbers');
     }
 
-    tasks.push(task);
-
-    localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
-// Remove Task
-function removeTask(e) {
-    if(e.target.parentElement.classList.contains('delete-item')) {
-        if(confirm('Are you Sure?')) {
-            e.target.parentElement.parentElement.remove();
+// Show Error
+function showError(error) {
+    // Hide Results
+    document.getElementById('results').style.display = 'none';
 
-            // Remove from Local Storage
-            removeTaskFromLocalStorage(e.target.parentElement.parentElement);
-        }
-    }
+    // Hide loader
+    document.getElementById('loading').style.display = 'none';
+
+    // Create a div
+    const errorDiv = document.createElement('div');
+
+    // Get elements
+    const card = document.querySelector('.card');
+    const heading = document.querySelector('.heading');
+
+    // Add Class
+    errorDiv.className = 'alert alert-danger';
+
+    // Create text node and append to div
+    errorDiv.appendChild(document.createTextNode(error));
+
+    // Insert error above heading
+    card.insertBefore(errorDiv, heading);
+
+    // Clear error after 3 seconds
+    setTimeout(clearError, 3000);
 }
 
-// Remove from Local Storage
-function removeTaskFromLocalStorage(taskItem) {
-    let tasks;
-    if(localStorage.getItem('tasks') === null){
-        tasks = [];
-    } else {
-        tasks = JSON.parse(localStorage.getItem('tasks'));
-    }
-
-    tasks.forEach(function(task, index){
-        if (taskItem.textContent === task) {
-            tasks.splice(index, 1);    
-        }
-    });
-
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-// Clear Tasks
-function clearTasks() {
-    // taskList.innerHTML = '';
-
-    // Faster
-    while (taskList.firstChild) {
-        taskList.removeChild(taskList.firstChild);
-    }
-
-    // Clear from Local Storage
-    clearTasksFromLocalStorage();
-}
-
-// Clear tasks from Local Storage
-function clearTasksFromLocalStorage() {
-    localStorage.clear();
-}
-
-// Filter Tasks
-function filterTasks(e) {
-    const text = e.target.value.toLowerCase();
-
-    document.querySelectorAll('.collection-item').forEach(function(task){
-        const item = task.firstChild.textContent;
-        if(item.toLowerCase().indexOf(text) != -1){
-            task.style.display = 'block';
-        } else {
-            task.style.display = 'none';
-        }
-    });
+// Clear Error
+function clearError() {
+    document.querySelector('.alert').remove();
 }
